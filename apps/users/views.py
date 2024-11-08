@@ -104,11 +104,12 @@ def user_list(request):
     paginator = Paginator(user_list, 5)
     users = paginator.page(page)
 
-    if request.method == 'POST':
-        form = SignupForm(request.POST)
-        if form.is_valid():
-            return post_request_handling(request, form)
 
+    if request.method == 'POST':
+        form = BatteryForm(request.POST)
+        if form.is_valid():
+            form.save()  # Lưu dữ liệu vào cơ sở dữ liệu
+            return redirect('battery_list')
     context = {
         'users': users,
         'form': form,

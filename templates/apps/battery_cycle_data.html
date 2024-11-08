@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+{% load formats file_extension info_value %}
+
+{% block content %}
+<main>
+  <div class="px-4 pt-6">
+    <div class="container mx-auto max-w-full mx-auto">
+
+      <!-- Info Component -->
+      <div class="flex flex-wrap">
+        <div class="w-full">
+          <div class="border mb-4 dark:bg-gray-800 dark:border-gray-600 rounded-lg dark:text-white">
+            <div class="py-3 rounded-t-lg px-3 mb-0 bg-gray-200 border-b-1 border-gray-300 text-gray-900 bg-gray-100 dark:bg-gray-700 dark:text-white px-4">
+              <h6>Chọn Log</h6>
+            </div>
+            <div class="flex-auto p-6 px-0 pt-0 pb-2 px-4 mt-3">
+              <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
+                <div class="mb-4">
+                  <select id="log-select"
+                    class="w-full py-2 px-3 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="" disabled selected>Chọn log cần hiển thị</option>
+                    {% for log in discharge_logs %}
+                    <option value="{{ log.process_id }}">
+                      {{ log.battery.name }} - ID: {{ log.process_id }} - Start: {{ log.start_time|date:"Y-m-d H:i" }} - End: {{ log.end_time|date:"Y-m-d H:i" }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button id="load-log-btn"
+                  class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-primary-800"
+                  type="button">
+                  Load Log
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Table -->
+      <div class="flex flex-wrap">
+        <div class="w-full">
+          <div class="border mb-4 dark:bg-gray-800 dark:border-gray-600 rounded-lg">
+            <div class="rounded-t-lg py-3 dark:bg-gray-800 dark:text-white px-4">
+              <h6>Lịch sử</h6>
+            </div>
+            <div class="flex-auto px-0 pt-0 pb-2">
+              <div class="block w-full overflow-auto scrolling-touch p-0">
+                <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
+                  <thead class="bg-gray-100 dark:bg-gray-700">
+                    <tr>
+                      <th class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Lần đo</th>
+                      <th class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Điện áp</th>
+                      <th class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Dòng</th>
+                      <th class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Nhiệt độ</th>
+                      <th class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Thời gian</th>
+                    </tr>
+                  </thead>
+                  <tbody id="log-table-body" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                    <!-- Dữ liệu sẽ được hiển thị ở đây -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const logSelect = document.getElementById('log-select');
+        const loadLogBtn = document.getElementById('load-log-btn');
+        const logTableBody = document.getElementById('log-table-body');
+
+        // Khi nhấn nút "Tải Log"
+        loadLogBtn.addEventListener('click', async () => {
+            const processId = logSelect.value;
+            if (!processId) {
+                alert('Vui lòng chọn một log trước khi tải.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/battery-cycle-data/get-log/${processId}/`);
+                if (!response.ok) {
+                    throw new Error('Không thể tải log. Lỗi từ server.');
+                }
+
+                const data = await response.json();
+                logTableBody.innerHTML = '';
+
+                // Kiểm tra nếu không có log
+                if (!data.logs || data.logs.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = `
+              <td colspan="5" class="p-4 text-sm text-center text-gray-500 dark:text-gray-400">
+                Không có log để hiển thị.
+              </td>
+            `;
+                    logTableBody.appendChild(emptyRow);
+                    return;
+                }
+
+                // Hiển thị dữ liệu log lên bảng
+                data.logs.forEach(log => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+              <td class="p-4 text-sm text-gray-900 dark:text-white">${log.cycle_number}</td>
+              <td class="p-4 text-sm text-gray-900 dark:text-white">${log.voltage} V</td>
+              <td class="p-4 text-sm text-gray-900 dark:text-white">${log.current} A</td>
+              <td class="p-4 text-sm text-gray-900 dark:text-white">${log.temperature} °C</td>
+              <td class="p-4 text-sm text-gray-900 dark:text-white">${log.timestamp}</td>
+            `;
+                    logTableBody.appendChild(row);
+                });
+            } catch (error) {
+                alert('Đã xảy ra lỗi khi tải log.');
+                console.error(error);
+            }
+        });
+    });
+</script>
+{% endblock content %}

@@ -25,6 +25,13 @@ from django.views.static import serve
 urlpatterns = [
     path("", include("home.urls")),
     path("admin/", admin.site.urls),
+    path("battery/", include("apps.Battery.urls")),
+    path("battery-process/", include("apps.BatteryProcessLog.urls")),
+    path("battery-cycle-data/", include("apps.BatteryCycleData.urls")),
+
+    
+    
+    
     path("api/", include("apps.api.urls")),
     path("users/", include("apps.users.urls")),
     path("charts/", include("apps.charts.urls")),

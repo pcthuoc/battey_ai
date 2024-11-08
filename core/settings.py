@@ -51,8 +51,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_extensions',
 
     "home",
+    'apps.Battery',
+    'apps.BatteryProcessLog',
+    'apps.BatteryCycleData',
     "apps.common",
     "apps.users",
     "apps.api",
@@ -159,7 +163,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+# Bật hỗ trợ múi giờ
 
 USE_I18N = True
 

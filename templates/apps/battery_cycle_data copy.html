@@ -1,0 +1,124 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block content %}
+<main>
+    <div class="px-4 pt-6">
+        <div class="container mx-auto max-w-full mx-auto">
+
+            <!-- Info Component -->
+            <div class="flex flex-wrap">
+                <div class="w-full">
+                    <div class="border mb-4 dark:bg-gray-800 dark:border-gray-600 rounded-lg dark:text-white">
+                        <div
+                            class="py-3 rounded-t-lg px-3 mb-0 bg-gray-200 border-b-1 border-gray-300 text-gray-900 bg-gray-100 dark:bg-gray-700 dark:text-white px-4">
+                            <h6>Battery Log Manager</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Selection Component -->
+            <div class="flex flex-wrap">
+                <div class="w-full">
+                    <div class="border mb-4 dark:bg-gray-800 dark:border-gray-600 rounded-lg">
+                        <div class="py-3 rounded-t-lg dark:bg-gray-800 dark:text-white px-4">
+                            <h6>Chọn Quá Trình Xả</h6>
+                        </div>
+                        <button id="load-log-btn" type="button"
+                            class="text-white w-full justify-center bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-800">
+                            Tải Log
+                        </button>
+
+                        <div class="flex-auto p-6">
+                            <!-- Dropdown chọn log -->
+                            <div class="mb-4">
+                                <label for="log-select"
+                                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Chọn
+                                    Log</label>
+                                <select id="log-select"
+                                    class="w-full py-2 px-3 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="" disabled selected>Chọn log cần hiển thị</option>
+                                    {% for log in discharge_logs %}
+                                    <option value="{{ log.id }}">
+                                        {{ log.battery.name }} - ID: {{ log.process_id }} - Start: {{
+                                        log.start_time|date:"Y-m-d H:i" }} - End: {{ log.end_time|date:"Y-m-d H:i" }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Nút Tải Log -->
+                            <button id="load-log-btn" type="button"
+                                class="text-white w-full justify-center bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-800">
+                                Tải Log
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal hiển thị logs -->
+            <div class="modal opacity-0 fixed top-0 left-0 w-full h-full flex items-center justify-center"
+                id="log-modal" style="display: none;">
+                <div class="modal-dialog bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg w-1/2">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold dark:text-white">Chi Tiết Log</h2>
+                        <button id="close-modal-btn" class="text-gray-600 dark:text-white text-2xl">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="log-content"
+                            class="bg-gray-100 dark:bg-gray-700 p-4 rounded text-sm text-gray-800 dark:text-white">Nội dung log sẽ hiển thị ở đây...</pre>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- JavaScript cho chức năng hiển thị log -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const logSelect = document.getElementById('log-select');
+        const loadLogBtn = document.getElementById('load-log-btn');
+        const logModal = document.getElementById('log-modal');
+        const logContent = document.getElementById('log-content');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+
+        // Kiểm tra tồn tại của các phần tử trước khi sử dụng
+        if (!logSelect || !loadLogBtn || !logModal || !logContent || !closeModalBtn) {
+            console.error("Không tìm thấy các phần tử cần thiết trong HTML.");
+            return;
+        }
+
+        // Khi nhấn nút "Tải Log"
+        loadLogBtn.addEventListener('click', async () => {
+            const logId = logSelect.value;
+            if (!logId) {
+                alert('Vui lòng chọn một log trước khi tải.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/battery-cycle-data/get-log/${logId}/`);
+                if (!response.ok) {
+                    throw new Error('Không thể tải log. Lỗi từ server.');
+                }
+
+                const data = await response.json();
+                logContent.textContent = data.log_content || 'Không có nội dung log.';
+                logModal.style.display = 'flex';
+                logModal.classList.remove('opacity-0');
+            } catch (error) {
+                alert('Đã xảy ra lỗi khi tải log.');
+                console.error(error);
+            }
+        });
+
+        // Đóng modal
+        closeModalBtn.addEventListener('click', () => {
+            logModal.style.display = 'none';
+            logModal.classList.add('opacity-0');
+        });
+    });
+</script>
+{% endblock content %}
